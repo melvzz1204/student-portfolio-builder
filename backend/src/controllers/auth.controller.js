@@ -97,4 +97,53 @@ const logout = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
-module.exports = { register, login, getMe, refresh, logout };
+// --- Google OAuth Handlers ---
+
+const googleCallback = asyncHandler(async (req, res) => {
+  // Passport attaches the authenticated user to req.user
+  if (!req.user) {
+    throw new ApiError(401, 'Google authentication failed');
+  }
+
+  const { accessToken, refreshToken } = tokensForUser(req.user);
+  setRefreshCookie(res, refreshToken);
+
+  // Redirect to your frontend dashboard/success route containing the access token if needed, 
+  // or a frontend handler route (e.g., http://localhost:3000/auth-success?token=...)
+  // For now, redirecting to a JSON response endpoint or frontend success page URL:
+  res.redirect(`/api/auth/login-success?token=${accessToken}`);
+});
+
+const loginSuccess = asyncHandler(async (req, res) => {
+  // If handled via session/passport or passed token query
+  if (req.user) {
+    const { accessToken } = tokensForUser(req.user);
+    return res.json({
+      success: true,
+      message: 'Successfully logged in with Google',
+      data: { user: req.user, accessToken },
+    });
+  }
+  
+  // Alternatively if token is passed via query params from redirect
+  const token = req.query.token;
+  if (token) {
+    return res.json({
+      success: true,
+      message: 'Successfully logged in with Google',
+      data: { accessToken },
+    });
+  }
+
+  throw new ApiError(401, 'Not Authorized');
+});
+
+module.exports = { 
+  register, 
+  login, 
+  getMe, 
+  refresh, 
+  logout, 
+  googleCallback, 
+  loginSuccess 
+};

@@ -5,8 +5,12 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
+const passport = require('passport');
 
 const env = require('./config/env');
+require('./config/passport'); // Load Passport configuration
+
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const achievementRoutes = require('./routes/achievements.routes');
@@ -26,6 +30,17 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Session & Passport Middleware (Required for Google OAuth)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 if (env.nodeEnv === 'development') {
   app.use(morgan('dev'));

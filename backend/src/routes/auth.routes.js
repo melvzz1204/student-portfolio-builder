@@ -1,6 +1,16 @@
+// src/routes/auth.routes.js
 const express = require('express');
+const passport = require('passport');
 const { body } = require('express-validator');
-const { register, login, getMe, refresh, logout } = require('../controllers/auth.controller');
+const { 
+  register, 
+  login, 
+  getMe, 
+  refresh, 
+  logout, 
+  googleCallback, 
+  loginSuccess 
+} = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const validate = require('../middleware/validate.middleware');
 
@@ -41,5 +51,20 @@ router.post(
 router.get('/me', protect, getMe);
 router.post('/refresh', refresh);
 router.post('/logout', logout);
+
+// --- Google OAuth Routes ---
+
+// 1. Initiates the Google OAuth flow
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// 2. Google OAuth callback route
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  googleCallback
+);
+
+// 3. Login success data route
+router.get('/login-success', loginSuccess);
 
 module.exports = router;
