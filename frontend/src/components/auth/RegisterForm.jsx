@@ -84,7 +84,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             <input
               type="email"
               autoComplete="email"
-              placeholder="you@marsu.edu.ph"
+              placeholder="you@gmail.com"
               value={form.email}
               onChange={set('email')}
               required

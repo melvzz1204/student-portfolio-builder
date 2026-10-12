@@ -157,7 +157,7 @@ function AuthDialog({ mode, onClose, onMode }) {
           <p id="auth-modal-desc" className="relative mt-1 text-sm text-white/70">
             {isLogin
               ? 'Sign in to manage your achievements and portfolio.'
-              : 'Verify your MarSU Student ID to get started.'}
+              : ''}
           </p>
 
           <button
