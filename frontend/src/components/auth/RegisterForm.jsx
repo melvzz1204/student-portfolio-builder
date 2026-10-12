@@ -71,6 +71,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
           <label>
             <span className="field-label">Full name</span>
             <input
+              autoFocus
               autoComplete="name"
               placeholder="Juan Dela Cruz"
               value={form.name}
@@ -82,7 +83,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
             <span className="field-label">Email address</span>
             <input
               type="email"
-              autoFocus
               autoComplete="email"
               placeholder="you@marsu.edu.ph"
               value={form.email}

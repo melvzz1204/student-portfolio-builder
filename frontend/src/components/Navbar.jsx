@@ -118,7 +118,7 @@ export default function Navbar() {
                   onClick={openRegister}
                   className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-bold text-burgundy-950 shadow-[0_6px_20px_rgba(201,162,39,0.4)] transition-all hover:-translate-y-0.5 hover:bg-gold-400 hover:shadow-[0_10px_28px_rgba(201,162,39,0.5)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-200"
                 >
-                  Apply Now
+                  Sign up
                 </button>
               </>
             )}
