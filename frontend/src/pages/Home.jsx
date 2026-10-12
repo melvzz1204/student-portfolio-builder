@@ -39,7 +39,7 @@ export default function Home() {
   }, [paused]);
 
   return (
-    <div className="min-h-screen bg-cream-50 font-sans text-burgundy-950 antialiased">
+    <div className="flex min-h-screen flex-col bg-cream-50 font-sans text-burgundy-950 antialiased lg:min-h-0 lg:flex-1 lg:overflow-hidden">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-gold-500 focus:px-5 focus:py-2.5 focus:text-sm focus:font-bold focus:text-burgundy-950"
@@ -47,10 +47,10 @@ export default function Home() {
         Skip to content
       </a>
 
-      <main id="main-content">
+      <main id="main-content" className="flex min-h-0 flex-1 flex-col">
         <section
           aria-labelledby="split-heading"
-          className="relative grid lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2"
+          className="relative grid flex-1 lg:min-h-0 lg:grid-cols-2"
         >
           <div
             aria-hidden="true"
@@ -58,7 +58,7 @@ export default function Home() {
           />
 
           {/* Brand panel */}
-          <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-burgundy-900 via-burgundy-900 to-burgundy-950 px-8 pb-14 pt-16 text-white sm:px-12 lg:py-20 lg:pr-20">
+          <div className="relative flex min-h-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-burgundy-900 via-burgundy-900 to-burgundy-950 px-8 pb-8 pt-10 text-white sm:px-12 lg:overflow-y-auto lg:py-10 lg:pr-20">
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -left-28 -top-28 h-80 w-80 rounded-full bg-gold-400/10 blur-3xl"
@@ -68,14 +68,14 @@ export default function Home() {
               className="pointer-events-none absolute inset-y-12 right-0 hidden w-px bg-gradient-to-b from-transparent via-gold-400/50 to-transparent lg:block"
             />
             <div className="relative">
-              <p className="mt-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-white/60">
+              <p className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-white/60">
                 <span aria-hidden="true" className="h-px w-8 bg-gold-400" />
                 Student Portfolio Builder
               </p>
 
               <h1
                 id="split-heading"
-                className="mt-4 max-w-md font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-balance lg:text-5xl"
+                className="mt-4 max-w-md font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-balance xl:text-4xl"
               >
                 Turn your achievements into a portfolio that{' '}
                 <span className="text-gold-400">speaks for you.</span>
@@ -83,7 +83,7 @@ export default function Home() {
             </div>
 
             <div
-              className="relative mt-12"
+              className="relative mt-8"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
             >
@@ -91,7 +91,7 @@ export default function Home() {
                 aria-roledescription="carousel"
                 aria-label="How it works"
                 aria-live="polite"
-                className="relative min-h-[168px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm sm:min-h-[152px]"
+                className="relative min-h-[140px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
               >
                 {steps.map((s, i) => {
                   const isActive = i === active;
@@ -111,8 +111,8 @@ export default function Home() {
                       <p className="font-display text-sm font-bold tracking-[0.2em] text-gold-400">
                         0{i + 1}
                       </p>
-                      <p className="mt-2 font-display text-2xl font-bold text-white">{s.title}</p>
-                      <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/75">{s.text}</p>
+                      <p className="mt-2 font-display text-xl font-bold text-white">{s.title}</p>
+                      <p className="mt-2 line-clamp-2 max-w-sm text-sm leading-relaxed text-white/75">{s.text}</p>
                     </div>
                   );
                 })}
@@ -156,18 +156,18 @@ export default function Home() {
                 </div>
               </div>
 
-              <p className="mt-6 text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-white/45">
                 Marinduque State University
               </p>
             </div>
           </div>
 
           {/* Action panel */}
-          <div className="relative flex flex-col justify-center bg-cream-50 px-8 py-16 sm:px-12 lg:py-20 lg:pl-20">
+          <div className="relative flex min-h-0 flex-col justify-center bg-cream-50 px-8 py-8 sm:px-12 lg:overflow-y-auto lg:py-10 lg:pl-20">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-700">
               Get started
             </p>
-            <h2 className="mt-4 max-w-md font-display text-2xl font-bold leading-snug text-burgundy-900 sm:text-3xl">
+            <h2 className="mt-4 max-w-md font-display text-2xl font-bold leading-snug text-burgundy-900">
               Your portfolio, ready in minutes.
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-burgundy-700/80">
@@ -175,7 +175,7 @@ export default function Home() {
               link with employers or OJT coordinators.
             </p>
 
-            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-col flex-wrap items-start gap-4 sm:flex-row sm:items-center">
               <button type="button" onClick={openRegister} className={PRIMARY_BTN}>
                 Create a free account
                 <span aria-hidden="true">→</span>

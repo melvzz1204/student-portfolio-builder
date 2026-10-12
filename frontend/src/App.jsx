@@ -16,8 +16,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthModalProvider>
+      <div className="flex min-h-dvh flex-col">
       <Navbar />
-      <main>
+      <main className="flex min-h-0 flex-1 flex-col">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="*" element={<p className="center">404 — Not found</p>} />
         </Routes>
       </main>
+      </div>
       </AuthModalProvider>
     </BrowserRouter>
   );
