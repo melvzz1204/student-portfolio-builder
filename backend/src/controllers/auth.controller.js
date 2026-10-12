@@ -2,6 +2,7 @@ const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../utils/jwt');
+const { buildSlug } = require('../utils/slug');
 const env = require('../config/env');
 
 const isProd = env.nodeEnv === 'production';
@@ -24,14 +25,25 @@ const tokensForUser = (user) => {
 };
 
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, studentId, course, yearLevel, section } = req.body;
 
   const existing = await User.findOne({ email });
   if (existing) {
     throw new ApiError(400, 'Email already in use');
   }
 
-  const user = await User.create({ name, email, password });
+  const existingId = await User.findOne({ studentId });
+  if (existingId) {
+    throw new ApiError(400, 'Student ID is already registered');
+  }
+
+  // Gumawa ng unique public slug para sa portfolio page (/p/:slug).
+  let slug = buildSlug(name);
+  while (await User.findOne({ slug })) {
+    slug = buildSlug(name);
+  }
+
+  const user = await User.create({ name, email, password, studentId, course, yearLevel, section, slug });
   const { accessToken, refreshToken } = tokensForUser(user);
   setRefreshCookie(res, refreshToken);
 

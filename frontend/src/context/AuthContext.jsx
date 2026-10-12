@@ -1,7 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import {
+  clearMockSession,
+  loginAccount,
+  readMockUser,
+  registerAccount,
+  resendOtpAccount,
+  verifyOtpAccount,
+} from '../api/auth';
 
 const AuthContext = createContext(null);
+const useMock = import.meta.env.VITE_USE_MOCK === 'true';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,8 +23,12 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const { data } = await api.get('/auth/me');
-      setUser(data?.data?.user || null);
+      if (useMock) {
+        setUser(readMockUser());
+      } else {
+        const { data } = await api.get('/auth/me');
+        setUser(data?.data?.user || null);
+      }
     } catch {
       setUser(null);
     } finally {
@@ -28,31 +41,40 @@ export function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('accessToken', data.data.accessToken);
-    setUser(data.data.user);
-    return data.data.user;
+    const result = await loginAccount(email, password);
+    setUser(result.user);
+    return result.user;
   };
 
-  const register = async (name, email, password) => {
-    const { data } = await api.post('/auth/register', { name, email, password });
-    localStorage.setItem('accessToken', data.data.accessToken);
-    setUser(data.data.user);
-    return data.data.user;
+  // Bago: tumatanggap ng student fields; nagbabalik ng { needsVerification, email }
+  // imbes na diretso login — dadaan muna sa Verify OTP page.
+  const register = async (fields) => {
+    const result = await registerAccount(fields);
+    if (result?.user) setUser(result.user);
+    return result;
   };
+
+  const verifyOtp = async (email, otp) => {
+    const result = await verifyOtpAccount(email, otp);
+    if (result?.user) setUser(result.user);
+    return result;
+  };
+
+  const resendOtp = async (email) => resendOtpAccount(email);
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      if (!useMock) await api.post('/auth/logout');
     } catch {
       // ignore
     }
-    localStorage.removeItem('accessToken');
+    if (useMock) clearMockSession();
+    else localStorage.removeItem('accessToken');
     setUser(null);
   };
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, isAuthenticated: !!user }),
+    () => ({ user, loading, login, register, verifyOtp, resendOtp, logout, isAuthenticated: !!user }),
     [user, loading]
   );
 

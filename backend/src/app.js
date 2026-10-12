@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -8,6 +9,8 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const achievementRoutes = require('./routes/achievements.routes');
+const portfolioRoutes = require('./routes/portfolio.routes');
 const { notFound, errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -45,6 +48,12 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/portfolios', portfolioRoutes);
+
+// Uploaded proof files (PDF/images) — naka-mount sa /api para gumana
+// rin sa Vite dev proxy at same-origin deployments.
+app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // 404 + centralized errors
 app.use(notFound);

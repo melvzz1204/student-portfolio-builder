@@ -23,6 +23,80 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
+    // MarSU Student ID (hal. 2023-00123) — ito ang batayan kung lehitimong
+    // estudyante ng MarSU ang nagre-register, hindi ang email domain.
+    // Kahit anong valid email address ay pwedeng gamitin sa login.
+    studentId: {
+      type: String,
+      required: [true, 'Student ID is required'],
+      unique: true,
+      uppercase: true,
+      trim: true,
+      match: [/^\d{4}-\d{5}$/, 'Student ID must follow the YYYY-NNNNN format (e.g. 2023-00123)'],
+    },
+    course: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    yearLevel: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    section: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    // Public portfolio slug (hal. juan-dela-cruz-a1b2c) — sparse para hindi
+    // mag-conflict ang mga lumang user na wala pang slug.
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true,
+    },
+    isPublic: {
+      type: Boolean,
+      default: true,
+    },
+    // --- Resume / portfolio profile (editable ng estudyante) ---
+    headline: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: [120, 'Headline cannot exceed 120 characters'],
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: [1000, 'Bio cannot exceed 1000 characters'],
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: [30, 'Phone cannot exceed 30 characters'],
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    education: {
+      type: [
+        {
+          school: { type: String, trim: true, default: '' },
+          degree: { type: String, trim: true, default: '' },
+          startYear: { type: String, trim: true, default: '' },
+          endYear: { type: String, trim: true, default: '' },
+          details: { type: String, trim: true, default: '' },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

@@ -32,6 +32,18 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ success: false, message: msg });
   }
 
+  // Multer upload errors (file size, mimetype)
+  if (err.name === 'MulterError') {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'File is too large (max 5MB)'
+        : err.message || 'File upload failed';
+    return res.status(400).json({ success: false, message });
+  }
+  if (err.message === 'Only PDF, JPG, PNG, or WebP files are allowed') {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+
   res.status(statusCode).json({
     success: false,
     message,
