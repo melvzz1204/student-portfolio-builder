@@ -5,12 +5,11 @@ import { useAuthModal } from './AuthModal';
 
 function MarsuCrest() {
   return (
-    <span
-      aria-hidden="true"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold-500 font-display text-2xl font-extrabold text-burgundy-950 shadow-[0_4px_14px_rgba(201,162,39,0.45)] ring-2 ring-gold-300"
-    >
-      M
-    </span>
+    <img
+      src="/marsu-logo.png"
+      alt="MarSU logo"
+      className="h-14 w-14 shrink-0 rounded-full bg-white object-cover shadow-[0_4px_14px_rgba(201,162,39,0.45)] ring-2 ring-gold-300"
+    />
   );
 }
 
@@ -58,7 +57,7 @@ export default function Navbar() {
           <Link to="/" className="group flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-300" aria-label="MarSU — back to home">
             <MarsuCrest />
             <span className="leading-tight">
-              <span className="block font-display text-xl font-bold tracking-tight">
+              <span className="block font-display text-2xl font-bold uppercase tracking-wide">
                 Mar<span className="text-gold-400">SU</span>
               </span>
               <span className="block text-[11px] font-medium uppercase tracking-[0.14em] text-white/75 group-hover:text-white">

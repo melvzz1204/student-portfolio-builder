@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthModal } from '../components/AuthModal';
 
 const steps = [
@@ -7,7 +8,7 @@ const steps = [
   },
   {
     title: 'Upload your proof',
-    text: 'Trainings, certificates, and awards — PDF or image, up to 5MB.',
+    text: 'Trainings, certificates, and awards PDF or image, up to 5MB.',
   },
   {
     title: 'Share one link',
@@ -18,10 +19,24 @@ const steps = [
 const PRIMARY_BTN =
   'inline-flex items-center justify-center gap-2 rounded-full bg-burgundy-800 px-7 py-3.5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(86,12,21,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-burgundy-700 hover:shadow-[0_12px_30px_rgba(86,12,21,0.34)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-burgundy-500';
 const LINK_BTN =
-  'inline-flex items-center justify-center rounded-full px-4 py-3 text-sm font-bold text-burgundy-800 underline decoration-gold-400 decoration-2 underline-offset-4 transition-colors duration-200 hover:text-burgundy-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-500';
+  'inline-flex items-center justify-center gap-2 rounded-full border-2 border-burgundy-800 bg-transparent px-7 py-3 text-sm font-bold text-burgundy-800 transition-all duration-300 hover:-translate-y-0.5 hover:bg-burgundy-800 hover:text-white hover:shadow-[0_8px_24px_rgba(86,12,21,0.28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-burgundy-500';
 
 export default function Home() {
   const { openLogin, openRegister } = useAuthModal();
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const goTo = useCallback((i) => {
+    setActive(((i % steps.length) + steps.length) % steps.length);
+  }, []);
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      setActive((prev) => (prev + 1) % steps.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [paused]);
 
   return (
     <div className="min-h-screen bg-cream-50 font-sans text-burgundy-950 antialiased">
@@ -67,21 +82,81 @@ export default function Home() {
               </h1>
             </div>
 
-            <div className="relative mt-12">
-              <ol className="space-y-4">
-                {steps.map((s, i) => (
-                  <li key={s.title} className="flex items-start gap-4">
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 font-display text-sm font-bold tracking-wide text-gold-400"
+            <div
+              className="relative mt-12"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              <div
+                aria-roledescription="carousel"
+                aria-label="How it works"
+                aria-live="polite"
+                className="relative min-h-[168px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm sm:min-h-[152px]"
+              >
+                {steps.map((s, i) => {
+                  const isActive = i === active;
+                  return (
+                    <div
+                      key={s.title}
+                      aria-hidden={!isActive}
+                      aria-roledescription="slide"
+                      className={`absolute inset-0 p-6 transition-all duration-500 ease-out ${
+                        isActive
+                          ? 'translate-x-0 opacity-100'
+                          : i < active || (active === 0 && i === steps.length - 1)
+                            ? 'pointer-events-none -translate-x-6 opacity-0'
+                            : 'pointer-events-none translate-x-6 opacity-0'
+                      }`}
                     >
-                      0{i + 1}
-                    </span>
-                    <span className="font-semibold text-white/90">{s.title}</span>
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-10 text-xs uppercase tracking-[0.2em] text-white/45">
+                      <p className="font-display text-sm font-bold tracking-[0.2em] text-gold-400">
+                        0{i + 1}
+                      </p>
+                      <p className="mt-2 font-display text-2xl font-bold text-white">{s.title}</p>
+                      <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/75">{s.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  {steps.map((s, i) => (
+                    <button
+                      key={s.title}
+                      type="button"
+                      onClick={() => goTo(i)}
+                      aria-label={`Go to step ${i + 1}: ${s.title}`}
+                      aria-current={i === active}
+                      className={`h-2 rounded-full transition-all duration-300 focus-visible:outline-2 focus-visible:outline-gold-300 ${
+                        i === active ? 'w-8 bg-gold-400' : 'w-2 bg-white/25 hover:bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mr-1 font-display text-xs font-bold tracking-widest text-white/50">
+                    0{active + 1} / 0{steps.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => goTo(active - 1)}
+                    aria-label="Previous step"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold-300"
+                  >
+                    <span aria-hidden="true">←</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo(active + 1)}
+                    aria-label="Next step"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 font-bold text-burgundy-950 transition-all hover:bg-gold-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-200"
+                  >
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </div>
+
+              <p className="mt-6 text-xs uppercase tracking-[0.2em] text-white/45">
                 Marinduque State University
               </p>
             </div>
@@ -97,7 +172,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-burgundy-700/80">
               Create your resume, upload your trainings and certificates, and share one public
-              link with employers and OJT coordinators.
+              link with employers or OJT coordinators.
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">

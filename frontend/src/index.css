@@ -48,6 +48,24 @@ body {
   color: #2b060b;
 }
 
+/* Clickable elements show pointer cursor */
+button,
+a,
+[role='button'],
+input[type='submit'],
+input[type='button'],
+label:has(input[type='file']),
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+a[aria-disabled='true'],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 /* Legacy app styles (non-landing pages) — preserved for dashboard/auth */
 .legacy-main main,
 main.legacy-main {
