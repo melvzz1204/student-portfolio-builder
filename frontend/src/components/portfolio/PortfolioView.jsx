@@ -1,4 +1,5 @@
 import { SECTION_LABELS } from '../../data/themes';
+import { yearLevelLabel } from '../../utils/marsu';
 
 const CATEGORY_LABELS = {
   certificate: 'Certificate',
@@ -100,12 +101,13 @@ export default function PortfolioView({ portfolio, settings }) {
               <div className="pf-edu card">
                 <p>
                   <strong>{portfolio.course}</strong>
-                  {portfolio.yearLevel ? ` • ${portfolio.yearLevel} Year` : ''}
+                  {portfolio.yearLevel ? ` • ${yearLevelLabel(portfolio.yearLevel, portfolio.role)}` : ''}
                   {portfolio.section ? ` • Section ${portfolio.section}` : ''}
                 </p>
-                <p className="muted">Student ID: {portfolio.studentId}</p>
-                <p className="muted">{portfolio.email}</p>
-              </div>
+                {portfolio.studentId && (
+                  <p className="muted">Student ID: {portfolio.studentId}</p>
+                )}
+                <p className="muted">{portfolio.email}</p>              </div>
             )}
           </section>
         );
@@ -133,7 +135,9 @@ export default function PortfolioView({ portfolio, settings }) {
         <h1 className="pf-name">{portfolio.name}</h1>
         <p className="pf-headline">{portfolio.headline}</p>
         <p className="pf-meta">
-          {portfolio.course} • {portfolio.yearLevel} Year • {portfolio.section}
+          {[portfolio.course, yearLevelLabel(portfolio.yearLevel, portfolio.role), portfolio.section]
+            .filter(Boolean)
+            .join(' • ')}
         </p>
       </header>
       {visible.map(renderSection)}

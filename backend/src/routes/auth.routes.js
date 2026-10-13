@@ -12,14 +12,22 @@ router.post(
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('role')
+      .optional()
+      .isIn(['student', 'alumni'])
+      .withMessage('Account type must be either student or alumni'),
     // Student ID ang batayan ng pagiging lehitimong MarSU student —
-    // kahit anong valid email ay pwede.
+    // hindi ito hinihingi sa mga alumni (role: 'alumni').
     body('studentId')
       .trim()
-      .notEmpty()
-      .withMessage('Student ID is required')
-      .matches(/^\d{4}-\d{5}$/)
-      .withMessage('Student ID must follow the YYYY-NNNNN format (e.g. 2023-00123)'),
+      .custom((value, { req }) => {
+        if (req.body.role === 'alumni') return true;
+        if (!value) throw new Error('Student ID is required');
+        if (!/^\d{4}-\d{5}$/.test(value)) {
+          throw new Error('Student ID must follow the YYYY-NNNNN format (e.g. 2023-00123)');
+        }
+        return true;
+      }),
     body('course').optional().trim(),
     body('yearLevel').optional().trim(),
     body('section').optional().trim(),

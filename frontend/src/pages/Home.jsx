@@ -22,7 +22,7 @@ const LINK_BTN =
   'inline-flex items-center justify-center gap-2 rounded-full border-2 border-burgundy-800 bg-transparent px-7 py-3 text-sm font-bold text-burgundy-800 transition-all duration-300 hover:-translate-y-0.5 hover:bg-burgundy-800 hover:text-white hover:shadow-[0_8px_24px_rgba(86,12,21,0.28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-burgundy-500';
 
 export default function Home() {
-  const { openLogin, openRegister } = useAuthModal();
+  const { openLogin, openSignup } = useAuthModal();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -67,19 +67,30 @@ export default function Home() {
               aria-hidden="true"
               className="pointer-events-none absolute inset-y-12 right-0 hidden w-px bg-gradient-to-b from-transparent via-gold-400/50 to-transparent lg:block"
             />
-            <div className="relative">
-              <p className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-white/60">
-                <span aria-hidden="true" className="h-px w-8 bg-gold-400" />
-                Student Portfolio Builder
+            <div className="relative flex flex-1 flex-col items-center justify-center py-10 text-center">
+              <p className="flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.26em] text-gold-300">
+                <span aria-hidden="true" className="h-px w-8 bg-gold-400/70" />
+                Marinduque State University
+                <span aria-hidden="true" className="h-px w-8 bg-gold-400/70" />
               </p>
 
               <h1
                 id="split-heading"
-                className="mt-4 max-w-md font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-balance xl:text-4xl"
+                className="mt-6 max-w-lg font-display text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-balance text-white xl:text-5xl"
               >
-                Turn your achievements into a portfolio that{' '}
-                <span className="text-gold-400">speaks for you.</span>
+                MarSU Student
+                <span className="mt-1 block text-gold-400">Portfolio Builder</span>
               </h1>
+
+              <span
+                aria-hidden="true"
+                className="mt-6 h-px w-16 bg-gradient-to-r from-transparent via-gold-400/70 to-transparent"
+              />
+
+              <p className="mt-6 max-w-md text-base leading-relaxed text-white/75 sm:text-lg">
+                Turn your achievements into a portfolio that{' '}
+                <span className="font-semibold text-white">speaks for you.</span>
+              </p>
             </div>
 
             <div
@@ -176,7 +187,7 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex flex-col flex-wrap items-start gap-4 sm:flex-row sm:items-center">
-              <button type="button" onClick={openRegister} className={PRIMARY_BTN}>
+              <button type="button" onClick={openSignup} className={PRIMARY_BTN}>
                 Create a free account
                 <span aria-hidden="true">→</span>
               </button>

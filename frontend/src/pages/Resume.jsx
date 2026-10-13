@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMyProfile, updateMyProfile } from '../api/profile';
+import { yearLevelLabel } from '../utils/marsu';
 
 const EMPTY_EDU = { school: '', degree: '', startYear: '', endYear: '', details: '' };
 
@@ -90,7 +91,9 @@ export default function Resume() {
         <div>
           <h2>My resume</h2>
           <p className="muted">
-            {profile?.name} • {profile?.studentId} • {profile?.course} {profile?.yearLevel && `• ${profile.yearLevel} Year`}
+            {[profile?.name, profile?.studentId, profile?.course, yearLevelLabel(profile?.yearLevel, profile?.role)]
+              .filter(Boolean)
+              .join(' • ')}
           </p>
         </div>
         <Link to={`/p/${profile?.slug || 'demo'}`} className="btn-secondary">

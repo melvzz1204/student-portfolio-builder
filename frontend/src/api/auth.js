@@ -29,29 +29,35 @@ function readPending() {
 }
 
 // POST /api/auth/register — sa mock, gumawa ng pending OTP imbes na user agad.
-export async function registerAccount({ name, email, password, studentId, course, yearLevel, section }) {
+export async function registerAccount({ name, email, password, studentId, course, yearLevel, section, role = 'student' }) {
+  const isAlumni = role === 'alumni';
   const cleanEmail = email.trim().toLowerCase();
   // Kahit anong valid email ay pwede — ang Student ID ang batayan
   // kung lehitimong estudyante ng MarSU ang nagre-register.
   if (!isValidEmail(cleanEmail)) {
     throw mockError(400, 'Enter a valid email address.');
   }
-  const cleanStudentId = normalizeStudentId(studentId);
-  if (!isValidStudentId(cleanStudentId)) {
+  // Alumni are not asked for a Student ID.
+  const cleanStudentId = isAlumni ? '' : normalizeStudentId(studentId);
+  if (!isAlumni && !isValidStudentId(cleanStudentId)) {
     throw mockError(400, 'Enter a valid MarSU Student ID (e.g. 2023-00123).');
   }
   if (useMock) {
-    if (!name.trim() || !course || !yearLevel || !section.trim()) {
-      throw mockError(400, 'Please complete name, course, year, and section.');
+    if (!name.trim() || !course || !yearLevel) {
+      throw mockError(400, 'Please complete your name, course, and year.');
     }
     if (password.length < 6) throw mockError(400, 'Password must be at least 6 characters.');
     try {
       const existing = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
-      if (existing && existing.studentId === cleanStudentId) {
+      if (!isAlumni && existing && existing.studentId === cleanStudentId) {
         throw mockError(400, 'This Student ID is already registered.');
       }
       const pendingDup = readPending();
-      if (pendingDup?.fields?.studentId === cleanStudentId && pendingDup.email !== cleanEmail) {
+      if (
+        !isAlumni &&
+        pendingDup?.fields?.studentId === cleanStudentId &&
+        pendingDup.email !== cleanEmail
+      ) {
         throw mockError(400, 'This Student ID already has a pending registration. Please verify the OTP.');
       }
     } catch (err) {
@@ -59,25 +65,36 @@ export async function registerAccount({ name, email, password, studentId, course
       // ignore parse errors
     }
     const otp = randomOtp();
+    const fields = {
+      name: name.trim(),
+      email: cleanEmail,
+      course,
+      yearLevel,
+      section: (section || '').trim(),
+      role,
+    };
+    if (!isAlumni) fields.studentId = cleanStudentId;
     const pending = {
       email: cleanEmail,
       otp,
       expiresAt: Date.now() + OTP_EXPIRY_MIN * 60 * 1000,
-      fields: { name: name.trim(), email: cleanEmail, studentId: cleanStudentId, course, yearLevel, section: section.trim() },
+      fields,
     };
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
     // mockOtp ay pang-demo lang — sa tunay na backend, isi-send ito via Resend email.
     return mockDelay({ needsVerification: true, email: cleanEmail, mockOtp: otp });
   }
-  const { data } = await api.post('/auth/register', {
+  const payload = {
     name,
     email: cleanEmail,
     password,
-    studentId,
     course,
     yearLevel,
-    section,
-  });
+    section: section || '',
+    role,
+  };
+  if (!isAlumni) payload.studentId = studentId;
+  const { data } = await api.post('/auth/register', payload);
   return data?.data;
 }
 

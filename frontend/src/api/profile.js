@@ -28,6 +28,7 @@ function seedProfile() {
     course: u.course || '',
     yearLevel: u.yearLevel || '',
     section: u.section || '',
+    role: u.role || 'student',
     slug: u.slug || slugFromName(u.name),
     isPublic: true,
     headline: '',
@@ -46,8 +47,8 @@ function readProfile() {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(seed));
       return seed;
     }
-    // Panatilihing naka-sync ang account fields (name/email/ID) sa auth record.
-    return { ...seed, ...JSON.parse(raw), name: seed.name, email: seed.email, studentId: seed.studentId };
+    // Panatilihing naka-sync ang account fields (name/email/ID/role) sa auth record.
+    return { ...seed, ...JSON.parse(raw), name: seed.name, email: seed.email, studentId: seed.studentId, role: seed.role };
   } catch {
     return seed;
   }

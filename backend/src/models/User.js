@@ -26,13 +26,17 @@ const userSchema = new mongoose.Schema(
     // MarSU Student ID (hal. 2023-00123) — ito ang batayan kung lehitimong
     // estudyante ng MarSU ang nagre-register, hindi ang email domain.
     // Kahit anong valid email address ay pwedeng gamitin sa login.
+    // Opsyonal na ngayon: ang mga alumni (role: 'alumni') ay walang Student ID.
     studentId: {
       type: String,
-      required: [true, 'Student ID is required'],
       unique: true,
+      sparse: true,
       uppercase: true,
       trim: true,
-      match: [/^\d{4}-\d{5}$/, 'Student ID must follow the YYYY-NNNNN format (e.g. 2023-00123)'],
+      validate: {
+        validator: (value) => !value || /^\d{4}-\d{5}$/.test(value),
+        message: 'Student ID must follow the YYYY-NNNNN format (e.g. 2023-00123)',
+      },
     },
     course: {
       type: String,
@@ -48,6 +52,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
+    },
+    // 'student' para sa mga kasalukuyang nag-aaral, 'alumni' para sa mga graduate.
+    role: {
+      type: String,
+      enum: ['student', 'alumni'],
+      default: 'student',
     },
     // Public portfolio slug (hal. juan-dela-cruz-a1b2c) — sparse para hindi
     // mag-conflict ang mga lumang user na wala pang slug.

@@ -4,7 +4,15 @@ import { useAuth } from '../../context/AuthContext';
 import PasswordToggle from './PasswordToggle';
 import { COURSES, YEAR_LEVELS, STUDENT_ID_EXAMPLE, isValidEmail, isValidStudentId, normalizeStudentId } from '../../utils/marsu';
 
-export default function RegisterForm({ onSwitchToLogin }) {
+const THIS_YEAR = new Date().getFullYear();
+// Only 2000 and later; most recent first so newly graduated alumni pick quickly.
+const GRADUATION_YEARS = Array.from(
+  { length: THIS_YEAR - 2000 + 1 },
+  (_, i) => String(THIS_YEAR - i)
+);
+
+export default function RegisterForm({ onSwitchToLogin, role = 'student' }) {
+  const isAlumni = role === 'alumni';
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -13,7 +21,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
     password: '',
     studentId: '',
     course: 'BSIT',
-    yearLevel: '1st',
+    // Reused field: year level for students, year graduated for alumni.
+    yearLevel: isAlumni ? String(THIS_YEAR) : '1st',
     section: '',
   });
   const [error, setError] = useState('');
@@ -26,22 +35,34 @@ export default function RegisterForm({ onSwitchToLogin }) {
     e.preventDefault();
     setError('');
     if (!isValidEmail(form.email)) {
-      setError('Enter a valid email address — any email works.');
+      setError('Enter a valid email address. Any email works.');
       return;
     }
-    if (!isValidStudentId(form.studentId)) {
+    if (!isAlumni && !isValidStudentId(form.studentId)) {
       setError(
-        `Enter a valid MarSU Student ID (e.g. ${STUDENT_ID_EXAMPLE}) — this verifies you're a MarSU student.`
+        `Enter a valid MarSU Student ID (e.g. ${STUDENT_ID_EXAMPLE}). This verifies you're a MarSU student.`
       );
       return;
     }
-    if (!form.section.trim()) {
+    if (!isAlumni && !form.section.trim()) {
       setError('Enter your section.');
       return;
     }
     setBusy(true);
     try {
-      const result = await register({ ...form, studentId: normalizeStudentId(form.studentId) });
+      const payload = {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        course: form.course,
+        yearLevel: form.yearLevel,
+        section: isAlumni ? '' : form.section.trim(),
+        role,
+      };
+      // Alumni are not asked for a Student ID.
+      if (!isAlumni) payload.studentId = normalizeStudentId(form.studentId);
+
+      const result = await register(payload);
       if (result?.needsVerification) {
         const q = new URLSearchParams({ email: result.email });
         if (result.mockOtp) q.set('mockOtp', result.mockOtp);
@@ -58,9 +79,9 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
   return (
     <>
-      <p className="auth-hint">
-        Your Student ID verifies you're a MarSU student.
-      </p>
+      {!isAlumni && (
+        <p className="auth-hint">Your Student ID verifies you&apos;re a MarSU student.</p>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -105,18 +126,20 @@ export default function RegisterForm({ onSwitchToLogin }) {
               <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />
             </span>
           </label>
+          {!isAlumni && (
+            <label>
+              <span className="field-label">Student ID</span>
+              <input
+                autoComplete="off"
+                placeholder={`e.g. ${STUDENT_ID_EXAMPLE}`}
+                value={form.studentId}
+                onChange={set('studentId')}
+                required
+              />
+            </label>
+          )}
           <label>
-            <span className="field-label">Student ID</span>
-            <input
-              autoComplete="off"
-              placeholder={`e.g. ${STUDENT_ID_EXAMPLE}`}
-              value={form.studentId}
-              onChange={set('studentId')}
-              required
-            />
-          </label>
-          <label>
-            <span className="field-label">Course</span>
+            <span className="field-label">{isAlumni ? 'Program' : 'Course'}</span>
             <select value={form.course} onChange={set('course')}>
               {COURSES.map((c) => (
                 <option key={c} value={c}>
@@ -125,29 +148,44 @@ export default function RegisterForm({ onSwitchToLogin }) {
               ))}
             </select>
           </label>
-          <label>
-            <span className="field-label">Year level</span>
-            <select value={form.yearLevel} onChange={set('yearLevel')}>
-              {YEAR_LEVELS.map((y) => (
-                <option key={y} value={y}>
-                  {y} Year
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="auth-col-span">
-            <span className="field-label">Section</span>
-            <input
-              autoComplete="off"
-              placeholder="e.g. BSIT-2A"
-              value={form.section}
-              onChange={set('section')}
-              required
-            />
-          </label>
+          {isAlumni ? (
+            <label>
+              <span className="field-label">Year graduated</span>
+              <select value={form.yearLevel} onChange={set('yearLevel')}>
+                {GRADUATION_YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <>
+              <label>
+                <span className="field-label">Year level</span>
+                <select value={form.yearLevel} onChange={set('yearLevel')}>
+                  {YEAR_LEVELS.map((y) => (
+                    <option key={y} value={y}>
+                      {y} Year
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="auth-col-span">
+                <span className="field-label">Section</span>
+                <input
+                  autoComplete="off"
+                  placeholder="e.g. BSIT-2A"
+                  value={form.section}
+                  onChange={set('section')}
+                  required
+                />
+              </label>
+            </>
+          )}
         </div>
         <button type="submit" disabled={busy} className="btn-primary">
-          {busy ? 'Creating...' : 'Register'}
+          {busy ? 'Creating...' : isAlumni ? 'Create alumni account' : 'Register'}
         </button>
       </form>
       <p className="muted">

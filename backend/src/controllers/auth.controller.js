@@ -25,16 +25,19 @@ const tokensForUser = (user) => {
 };
 
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password, studentId, course, yearLevel, section } = req.body;
+  const { name, email, password, studentId, course, yearLevel, section, role } = req.body;
 
   const existing = await User.findOne({ email });
   if (existing) {
     throw new ApiError(400, 'Email already in use');
   }
 
-  const existingId = await User.findOne({ studentId });
-  if (existingId) {
-    throw new ApiError(400, 'Student ID is already registered');
+  // Ang mga alumni ay walang Student ID — laktawan ang duplicate check.
+  if (studentId) {
+    const existingId = await User.findOne({ studentId });
+    if (existingId) {
+      throw new ApiError(400, 'Student ID is already registered');
+    }
   }
 
   // Gumawa ng unique public slug para sa portfolio page (/p/:slug).
@@ -43,7 +46,17 @@ const register = asyncHandler(async (req, res) => {
     slug = buildSlug(name);
   }
 
-  const user = await User.create({ name, email, password, studentId, course, yearLevel, section, slug });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    studentId: studentId || undefined,
+    course,
+    yearLevel,
+    section,
+    role: role || 'student',
+    slug,
+  });
   const { accessToken, refreshToken } = tokensForUser(user);
   setRefreshCookie(res, refreshToken);
 

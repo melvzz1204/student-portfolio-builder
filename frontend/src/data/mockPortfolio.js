@@ -11,6 +11,7 @@ export const MOCK_PORTFOLIO = {
   course: 'BSIT',
   yearLevel: '2nd',
   section: 'BSIT-2A',
+  role: 'student',
   avatarInitials: 'JD',
   skills: ['HTML/CSS', 'JavaScript', 'React', 'Node.js', 'Canva'],
   achievements: [

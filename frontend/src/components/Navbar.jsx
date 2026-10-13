@@ -15,7 +15,7 @@ function MarsuCrest() {
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
-  const { openLogin, openRegister } = useAuthModal();
+  const { openLogin, openSignup } = useAuthModal();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -114,7 +114,7 @@ export default function Navbar() {
                 </button>
                 <button
                   type="button"
-                  onClick={openRegister}
+                  onClick={openSignup}
                   className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-bold text-burgundy-950 shadow-[0_6px_20px_rgba(201,162,39,0.4)] transition-all hover:-translate-y-0.5 hover:bg-gold-400 hover:shadow-[0_10px_28px_rgba(201,162,39,0.5)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-200"
                 >
                   Sign up
@@ -212,7 +212,7 @@ export default function Navbar() {
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      openRegister();
+                      openSignup();
                     }}
                     className="rounded-xl bg-gold-500 px-4 py-3 text-center text-sm font-bold text-burgundy-950"
                   >

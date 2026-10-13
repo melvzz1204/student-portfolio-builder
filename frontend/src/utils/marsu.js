@@ -48,6 +48,12 @@ export const COURSES = [
 
 export const YEAR_LEVELS = ['1st', '2nd', '3rd', '4th', '5th'];
 
+// "2nd Year" para sa mga estudyante, "Class of 2020" para sa mga alumni.
+export function yearLevelLabel(yearLevel, role) {
+  if (!yearLevel) return '';
+  return role === 'alumni' ? `Class of ${yearLevel}` : `${yearLevel} Year`;
+}
+
 export const OTP_LENGTH = 6;
 export const OTP_EXPIRY_MIN = 10;
 export const RESEND_COOLDOWN_S = 60;
