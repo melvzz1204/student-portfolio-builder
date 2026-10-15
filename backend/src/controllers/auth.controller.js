@@ -1,3 +1,4 @@
+// src/controllers/auth.controller.js
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
@@ -17,7 +18,7 @@ const setRefreshCookie = (res, token) => {
 };
 
 const tokensForUser = (user) => {
-  const payload = { id: user._id.toString() };
+  const payload = { id: user.id }; // Supabase uses string/UUID 'id'
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
@@ -27,33 +28,46 @@ const tokensForUser = (user) => {
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, studentId, course, yearLevel, section } = req.body;
 
-  const existing = await User.findOne({ email });
+  const existing = await User.findOneByEmail(email);
   if (existing) {
     throw new ApiError(400, 'Email already in use');
   }
 
-  const existingId = await User.findOne({ studentId });
-  if (existingId) {
-    throw new ApiError(400, 'Student ID is already registered');
+  // Check if studentId is already registered in Supabase
+  if (studentId) {
+    const supabase = require('../config/supabase');
+    const { data: existingId } = await supabase
+      .from('users')
+      .select('id')
+      .eq('student_id', studentId.toUpperCase())
+      .single();
+
+    if (existingId) {
+      throw new ApiError(400, 'Student ID is already registered');
+    }
   }
 
   // Gumawa ng unique public slug para sa portfolio page (/p/:slug).
   let slug = buildSlug(name);
-  while (await User.findOne({ slug })) {
-    slug = buildSlug(name);
+  const supabase = require('../config/supabase');
+  while (true) {
+    const { data: slugCheck } = await supabase.from('users').select('id').eq('slug', slug).single();
+    if (!slugCheck) break;
+    slug = buildSlug(name) + '-' + Math.random().toString(36).substring(2, 6);
   }
 
   const user = await User.create({ name, email, password, studentId, course, yearLevel, section, slug });
   const { accessToken, refreshToken } = tokensForUser(user);
   setRefreshCookie(res, refreshToken);
 
-  res.status(201).json({ success: true, data: { user, accessToken } });
+  res.status(201).json({ success: true, data: { user: user.toJSON(), accessToken } });
 });
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email }).select('+password');
+  // Pass true to include password for verification comparison
+  const user = await User.findOneByEmail(email, true);
   if (!user || !(await user.comparePassword(password))) {
     throw new ApiError(401, 'Invalid email or password');
   }
@@ -108,24 +122,19 @@ const googleCallback = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = tokensForUser(req.user);
   setRefreshCookie(res, refreshToken);
 
-  // Redirect to your frontend dashboard/success route containing the access token if needed, 
-  // or a frontend handler route (e.g., http://localhost:3000/auth-success?token=...)
-  // For now, redirecting to a JSON response endpoint or frontend success page URL:
   res.redirect(`/api/auth/login-success?token=${accessToken}`);
 });
 
 const loginSuccess = asyncHandler(async (req, res) => {
-  // If handled via session/passport or passed token query
   if (req.user) {
     const { accessToken } = tokensForUser(req.user);
     return res.json({
       success: true,
       message: 'Successfully logged in with Google',
-      data: { user: req.user, accessToken },
+      data: { user: req.user.toJSON ? req.user.toJSON() : req.user, accessToken },
     });
   }
   
-  // Alternatively if token is passed via query params from redirect
   const token = req.query.token;
   if (token) {
     return res.json({

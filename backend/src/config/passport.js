@@ -2,54 +2,68 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
+const { buildSlug } = require('../utils/slug');
+const supabase = require('./supabase');
+
+console.log('Google Client ID Loaded:', process.env.GOOGLE_CLIENT_ID ? 'YES' : 'NO');
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+      scope: ['profile', 'email'], // <--- THIS LINE FIXES THE MISSING SCOPE ERROR
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
-        if (user) return done(null, user);
+        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+        if (!email) {
+          return done(new Error('No email found from Google profile'), null);
+        }
 
-        user = await User.findOne({ email: profile.emails[0].value });
+        let user = await User.findOneByEmail(email);
+
         if (user) {
-          user.googleId = profile.id;
-          if (!user.avatar && profile.photos?.[0]) {
-            user.avatar = profile.photos[0].value;
+          const updates = {};
+          if (profile.id && user.googleId !== profile.id) {
+            updates.googleId = profile.id;
           }
-          await user.save();
+          if (profile.photos?.[0]?.value && !user.avatar) {
+            updates.avatar = profile.photos[0].value;
+          }
+          if (Object.keys(updates).length > 0) {
+            await user.save(updates);
+          }
           return done(null, user);
         }
 
-        // Generate a unique slug for the new Google user
-        const baseSlug = profile.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        let slug = baseSlug || 'user';
-        let counter = 1;
-        while (await User.findOne({ slug })) {
-          slug = `${baseSlug}-${counter++}`;
+        let slug = buildSlug(profile.displayName || 'user');
+        while (true) {
+          const { data: slugCheck } = await supabase.from('users').select('id').eq('slug', slug).single();
+          if (!slugCheck) break;
+          slug = buildSlug(profile.displayName || 'user') + '-' + Math.random().toString(36).substring(2, 6);
         }
 
         user = await User.create({
-          name: profile.displayName,
-          email: profile.emails[0].value,
+          name: profile.displayName || 'Google User',
+          email: email,
+          password: Math.random().toString(36).slice(-12),
           googleId: profile.id,
           avatar: profile.photos?.[0]?.value || '',
           slug,
         });
 
-        done(null, user);
+        return done(null, user);
       } catch (err) {
-        done(err, null);
+        return done(err, null);
       }
     }
   )
 );
 
 passport.serializeUser((user, done) => done(null, user.id));
+
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);

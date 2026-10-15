@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const achievementRoutes = require('./routes/achievements.routes');
 const portfolioRoutes = require('./routes/portfolio.routes');
+const resumeRoutes = require('./routes/resume.routes');
 const { notFound, errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/portfolios', portfolioRoutes);
+app.use('/api/resumes', resumeRoutes);
 
 // Uploaded proof files (PDF/images) — naka-mount sa /api para gumana
 // rin sa Vite dev proxy at same-origin deployments.

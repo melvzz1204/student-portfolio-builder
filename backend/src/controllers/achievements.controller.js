@@ -1,12 +1,10 @@
-const Achievement = require('../models/Achievement');
-const { CATEGORIES } = require('../models/Achievement');
+// src/controllers/achievement.controller.js
+const supabase = require('../config/supabase');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
-const { removeUpload } = require('../middleware/upload.middleware');
+const { uploadFileToSupabase } = require('../utils/supabaseStorage');
 
-function toPublicFileUrl(req, filename) {
-  return `/api/uploads/${filename}`;
-}
+const CATEGORIES = ['certificate', 'award', 'competition', 'leadership', 'project', 'other'];
 
 function pickBody(body) {
   const { title, category, issuer, dateReceived, description, proofType, proofUrl } = body;
@@ -31,84 +29,196 @@ function validatePayload({ title, category, proofType, proofUrl, file }, isEdit)
   }
 }
 
-// GET /api/achievements — sariling achievements ng naka-login
+// GET /api/achievements — list user achievements
 const list = asyncHandler(async (req, res) => {
-  const items = await Achievement.find({ user: req.user._id }).sort({ dateReceived: -1, createdAt: -1 });
-  res.json({ success: true, data: { achievements: items } });
+  const { data: items, error } = await supabase
+    .from('achievements')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('date_received', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  const achievements = (items || []).map(row => ({
+    id: row.id,
+    user: row.user_id,
+    title: row.title,
+    category: row.category,
+    issuer: row.issuer,
+    dateReceived: row.date_received,
+    description: row.description,
+    proofType: row.proof_type,
+    proofUrl: row.proof_url,
+    fileUrl: row.file_url,
+    fileName: row.file_name,
+    fileSize: row.file_size,
+    fileType: row.file_type,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+
+  res.json({ success: true, data: { achievements } });
 });
 
-// POST /api/achievements — multipart (file) o JSON (url)
+// POST /api/achievements — create achievement with Supabase cloud file upload
 const create = asyncHandler(async (req, res) => {
   const data = pickBody(req.body);
   validatePayload({ ...data, file: req.file }, false);
 
-  const record = {
-    user: req.user._id,
+  let fileUrl = '';
+  let fileName = '';
+  let fileSize = 0;
+  let fileType = '';
+
+  const proofType = data.proofType || 'file';
+
+  if (proofType === 'file' && req.file) {
+    fileUrl = await uploadFileToSupabase(req.file, 'uploads');
+    fileName = req.file.originalname;
+    fileSize = req.file.size;
+    fileType = req.file.mimetype;
+  }
+
+  const insertPayload = {
+    user_id: req.user.id,
     title: String(data.title).trim(),
     category: data.category || 'certificate',
     issuer: (data.issuer || '').trim(),
     description: (data.description || '').trim(),
-    proofType: data.proofType || 'file',
+    proof_type: proofType,
+    proof_url: proofType === 'url' ? String(data.proofUrl).trim() : '',
+    file_url: fileUrl,
+    file_name: fileName,
+    file_size: fileSize,
+    file_type: fileType,
+    date_received: data.dateReceived ? new Date(data.dateReceived).toISOString() : null,
   };
-  if (data.dateReceived) record.dateReceived = new Date(data.dateReceived);
-  if (record.proofType === 'url') {
-    record.proofUrl = String(data.proofUrl).trim();
-  } else {
-    record.fileUrl = toPublicFileUrl(req, req.file.filename);
-    record.fileName = req.file.originalname;
-    record.fileSize = req.file.size;
-    record.fileType = req.file.mimetype;
-  }
 
-  const created = await Achievement.create(record);
-  res.status(201).json({ success: true, data: { achievement: created } });
+  const { data: createdRow, error } = await supabase
+    .from('achievements')
+    .insert([insertPayload])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  const achievement = {
+    id: createdRow.id,
+    user: createdRow.user_id,
+    title: createdRow.title,
+    category: createdRow.category,
+    issuer: createdRow.issuer,
+    dateReceived: createdRow.date_received,
+    description: createdRow.description,
+    proofType: createdRow.proof_type,
+    proofUrl: createdRow.proof_url,
+    fileUrl: createdRow.file_url,
+    fileName: createdRow.file_name,
+    fileSize: createdRow.file_size,
+    fileType: createdRow.file_type,
+    createdAt: createdRow.created_at,
+    updatedAt: createdRow.updated_at,
+  };
+
+  res.status(201).json({ success: true, data: { achievement } });
 });
 
-// PUT /api/achievements/:id
+// PUT /api/achievements/:id — update achievement
 const update = asyncHandler(async (req, res) => {
-  const item = await Achievement.findOne({ _id: req.params.id, user: req.user._id });
-  if (!item) throw new ApiError(404, 'Achievement not found');
+  const { data: existingItem, error: fetchError } = await supabase
+    .from('achievements')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id)
+    .single();
+
+  if (fetchError || !existingItem) {
+    throw new ApiError(404, 'Achievement not found');
+  }
 
   const data = pickBody(req.body);
-  const nextProofType = data.proofType || item.proofType;
+  const nextProofType = data.proofType || existingItem.proof_type;
   validatePayload({ ...data, proofType: nextProofType, file: req.file }, true);
 
-  if (data.title !== undefined) item.title = String(data.title).trim();
-  if (data.category) item.category = data.category;
-  if (data.issuer !== undefined) item.issuer = String(data.issuer).trim();
-  if (data.description !== undefined) item.description = String(data.description).trim();
-  if (data.dateReceived) item.dateReceived = new Date(data.dateReceived);
-  item.proofType = nextProofType;
+  const updatePayload = {};
+  if (data.title !== undefined) updatePayload.title = String(data.title).trim();
+  if (data.category) updatePayload.category = data.category;
+  if (data.issuer !== undefined) updatePayload.issuer = String(data.issuer).trim();
+  if (data.description !== undefined) updatePayload.description = String(data.description).trim();
+  if (data.dateReceived) updatePayload.date_received = new Date(data.dateReceived).toISOString();
+  updatePayload.proof_type = nextProofType;
 
   if (nextProofType === 'url') {
-    if (data.proofUrl !== undefined) item.proofUrl = String(data.proofUrl).trim();
-    if (item.fileUrl) {
-      removeUpload(item.fileUrl);
-      item.fileUrl = null;
-      item.fileName = '';
-      item.fileSize = 0;
-      item.fileType = '';
-    }
+    if (data.proofUrl !== undefined) updatePayload.proof_url = String(data.proofUrl).trim();
+    updatePayload.file_url = '';
+    updatePayload.file_name = '';
+    updatePayload.file_size = 0;
+    updatePayload.file_type = '';
   } else if (req.file) {
-    if (item.fileUrl) removeUpload(item.fileUrl);
-    item.fileUrl = toPublicFileUrl(req, req.file.filename);
-    item.fileName = req.file.originalname;
-    item.fileSize = req.file.size;
-    item.fileType = req.file.mimetype;
-    item.proofUrl = '';
+    const fileUrl = await uploadFileToSupabase(req.file, 'uploads');
+    updatePayload.file_url = fileUrl;
+    updatePayload.file_name = req.file.originalname;
+    updatePayload.file_size = req.file.size;
+    updatePayload.file_type = req.file.mimetype;
+    updatePayload.proof_url = '';
   }
 
-  await item.save();
-  res.json({ success: true, data: { achievement: item } });
+  updatePayload.updated_at = new Date().toISOString();
+
+  const { data: updatedRow, error: updateError } = await supabase
+    .from('achievements')
+    .update(updatePayload)
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+
+  const achievement = {
+    id: updatedRow.id,
+    user: updatedRow.user_id,
+    title: updatedRow.title,
+    category: updatedRow.category,
+    issuer: updatedRow.issuer,
+    dateReceived: updatedRow.date_received,
+    description: updatedRow.description,
+    proofType: updatedRow.proof_type,
+    proofUrl: updatedRow.proof_url,
+    fileUrl: updatedRow.file_url,
+    fileName: updatedRow.file_name,
+    fileSize: updatedRow.file_size,
+    fileType: updatedRow.file_type,
+    createdAt: updatedRow.created_at,
+    updatedAt: updatedRow.updated_at,
+  };
+
+  res.json({ success: true, data: { achievement } });
 });
 
-// DELETE /api/achievements/:id
+// DELETE /api/achievements/:id — delete achievement
 const remove = asyncHandler(async (req, res) => {
-  const item = await Achievement.findOne({ _id: req.params.id, user: req.user._id });
-  if (!item) throw new ApiError(404, 'Achievement not found');
-  if (item.fileUrl) removeUpload(item.fileUrl);
-  await item.deleteOne();
+  const { data: existingItem, error: fetchError } = await supabase
+    .from('achievements')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id)
+    .single();
+
+  if (fetchError || !existingItem) {
+    throw new ApiError(404, 'Achievement not found');
+  }
+
+  const { error: deleteError } = await supabase
+    .from('achievements')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id);
+
+  if (deleteError) throw deleteError;
+
   res.json({ success: true, message: 'Achievement deleted' });
 });
 
-module.exports = { list, create, update, remove };
+module.exports = { list, create, update, remove, CATEGORIES };

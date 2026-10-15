@@ -1,63 +1,119 @@
-const mongoose = require('mongoose');
+// src/models/Achievement.js
+const supabase = require('../config/supabase');
 
-const CATEGORIES = ['certificate', 'training', 'award', 'seminar', 'other'];
+class Achievement {
+  /**
+   * Find all achievements for a specific user
+   * @param {string} userId - User's UUID
+   */
+  static async findByUserId(userId) {
+    const { data, error } = await supabase
+      .from('achievements')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-const achievementSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
-    title: {
-      type: String,
-      required: [true, 'Title is required'],
-      trim: true,
-      maxlength: [120, 'Title cannot exceed 120 characters'],
-    },
-    category: {
-      type: String,
-      enum: CATEGORIES,
-      default: 'certificate',
-    },
-    issuer: {
-      type: String,
-      trim: true,
-      default: '',
-      maxlength: [120, 'Issuer cannot exceed 120 characters'],
-    },
-    dateReceived: {
-      type: Date,
-      default: Date.now,
-    },
-    description: {
-      type: String,
-      trim: true,
-      default: '',
-      maxlength: [1000, 'Description cannot exceed 1000 characters'],
-    },
-    proofType: {
-      type: String,
-      enum: ['file', 'url'],
-      default: 'file',
-    },
-    // Kapag proofType === 'file'
-    fileUrl: { type: String, default: null }, // hal. /api/uploads/<filename>
-    fileName: { type: String, default: '' },
-    fileSize: { type: Number, default: 0 },
-    fileType: { type: String, default: '' },
-    // Kapag proofType === 'url'
-    proofUrl: { type: String, default: '', trim: true },
-  },
-  { timestamps: true }
-);
+    if (error) throw error;
+    return data;
+  }
 
-achievementSchema.methods.toJSON = function () {
-  const obj = this.toObject();
-  delete obj.__v;
-  return obj;
-};
+  /**
+   * Find a single achievement by ID
+   * @param {string} id - Achievement UUID
+   */
+  static async findById(id) {
+    const { data, error } = await supabase
+      .from('achievements')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-module.exports = mongoose.model('Achievement', achievementSchema);
-module.exports.CATEGORIES = CATEGORIES;
+    if (error && error.code !== 'PGRST116') throw error; // Ignore not found error code
+    return data;
+  }
+
+  /**
+   * Create a new achievement record
+   * @param {Object} achievementData
+   */
+  static async create(achievementData) {
+    const {
+      userId,
+      title,
+      category,
+      issuer,
+      dateIssued,
+      description,
+      proofFileUrl,
+    } = achievementData;
+
+    const { data, error } = await supabase
+      .from('achievements')
+      .insert([
+        {
+          user_id: userId,
+          title,
+          category,
+          issuer,
+          date_issued: dateIssued,
+          description,
+          proof_file_url: proofFileUrl,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Update an existing achievement
+   * @param {string} id - Achievement UUID
+   * @param {string} userId - Owner's UUID (for ownership check)
+   * @param {Object} updates
+   */
+  static async update(id, userId, updates) {
+    const { title, category, issuer, dateIssued, description, proofFileUrl } = updates;
+
+    const payload = {};
+    if (title !== undefined) payload.title = title;
+    if (category !== undefined) payload.category = category;
+    if (issuer !== undefined) payload.issuer = issuer;
+    if (dateIssued !== undefined) payload.date_issued = dateIssued;
+    if (description !== undefined) payload.description = description;
+    if (proofFileUrl !== undefined) payload.proof_file_url = proofFileUrl;
+    payload.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('achievements')
+      .update(payload)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Delete an achievement
+   * @param {string} id - Achievement UUID
+   * @param {string} userId - Owner's UUID
+   */
+  static async delete(id, userId) {
+    const { data, error } = await supabase
+      .from('achievements')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+}
+
+module.exports = Achievement;
