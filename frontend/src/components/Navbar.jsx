@@ -42,7 +42,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout();
     setOpen(false);
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -76,18 +76,6 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  to="/dashboard/resume"
-                  className="rounded-full px-3 py-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-gold-300"
-                >
-                  Resume
-                </Link>
-                <Link
-                  to="/dashboard/achievements"
-                  className="rounded-full px-3 py-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-gold-300"
-                >
-                  Achievements
-                </Link>
                 <span className="max-w-28 truncate text-xs text-white/70">{user?.name}</span>
                 <button
                   type="button"
@@ -96,12 +84,6 @@ export default function Navbar() {
                 >
                   Logout
                 </button>
-                <Link
-                  to="/register"
-                  className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-bold text-burgundy-950 shadow-[0_6px_20px_rgba(201,162,39,0.4)] transition-all hover:-translate-y-0.5 hover:bg-gold-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-200"
-                >
-                  Portfolio
-                </Link>
               </>
             ) : (
               <>
@@ -173,20 +155,6 @@ export default function Navbar() {
                     className="rounded-xl bg-white/10 px-4 py-3 text-center text-sm font-bold text-white"
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    to="/dashboard/resume"
-                    onClick={() => setOpen(false)}
-                    className="rounded-xl bg-white/10 px-4 py-3 text-center text-sm font-bold text-white"
-                  >
-                    Resume
-                  </Link>
-                  <Link
-                    to="/dashboard/achievements"
-                    onClick={() => setOpen(false)}
-                    className="rounded-xl bg-white/10 px-4 py-3 text-center text-sm font-bold text-white"
-                  >
-                    Achievements
                   </Link>
                   <button
                     type="button"
