@@ -1,5 +1,4 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
-const useMock = import.meta.env.VITE_USE_MOCK === 'true';
 
 function GoogleLogo(props) {
   return (
@@ -28,20 +27,6 @@ function GoogleLogo(props) {
 // to /auth/callback?token=<accessToken>. New Google users get an account
 // created automatically, so this also serves as Google sign-up.
 export default function GoogleSignInButton() {
-  if (useMock) {
-    return (
-      <button
-        type="button"
-        disabled
-        title="Connect the backend to enable Google sign-in"
-        className="google-btn"
-      >
-        <GoogleLogo className="google-logo" />
-        Continue with Google
-      </button>
-    );
-  }
-
   return (
     <button
       type="button"
