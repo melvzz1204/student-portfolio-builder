@@ -62,6 +62,23 @@ export function AuthProvider({ children }) {
 
   const resendOtp = async (email) => resendOtpAccount(email);
 
+  // Completes the backend Google OAuth redirect: stores the access token
+  // from /auth/callback?token=... and hydrates the user.
+  const completeGoogleLogin = async (token) => {
+    localStorage.setItem('accessToken', token);
+    try {
+      const { data } = await api.get('/auth/me');
+      const nextUser = data?.data?.user || null;
+      if (!nextUser) throw new Error('No user returned');
+      setUser(nextUser);
+      return nextUser;
+    } catch (err) {
+      localStorage.removeItem('accessToken');
+      setUser(null);
+      throw err;
+    }
+  };
+
   const logout = async () => {
     try {
       if (!useMock) await api.post('/auth/logout');
@@ -74,7 +91,7 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ user, loading, login, register, verifyOtp, resendOtp, logout, isAuthenticated: !!user }),
+    () => ({ user, loading, login, register, verifyOtp, resendOtp, completeGoogleLogin, logout, isAuthenticated: !!user }),
     [user, loading]
   );
 

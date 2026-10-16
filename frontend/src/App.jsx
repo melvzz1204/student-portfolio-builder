@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Achievements from './pages/Achievements';
 import Customize from './pages/Customize';
 import Dashboard from './pages/Dashboard';
+import GoogleCallback from './pages/GoogleCallback';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import PublicPortfolio from './pages/PublicPortfolio';
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/auth/callback" element={<GoogleCallback />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/resume" element={<Resume />} />

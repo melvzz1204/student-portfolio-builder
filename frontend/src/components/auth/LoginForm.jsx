@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import GoogleSignInButton from './GoogleSignInButton';
 import PasswordToggle from './PasswordToggle';
 
 export default function LoginForm({ onSwitchToRegister }) {
@@ -37,6 +38,10 @@ export default function LoginForm({ onSwitchToRegister }) {
           {error}
         </p>
       )}
+      <GoogleSignInButton />
+      <div className="auth-divider" role="separator">
+        <span>or</span>
+      </div>
       <form onSubmit={onSubmit} className="form" noValidate>
         <label>
           <span className="field-label">Email address</span>
