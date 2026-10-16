@@ -42,7 +42,7 @@ export default function GoogleCallback() {
             {error}
           </p>
           <p className="muted">
-            <Link to="/login">Back to login</Link>
+            <Link to="/">Back to home</Link>
           </p>
         </>
       ) : (

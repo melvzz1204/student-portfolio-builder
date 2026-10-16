@@ -20,7 +20,6 @@ const previewUrls = new Map();
 
 function seed() {
   // Blangko sa umpisa — sariling uploads ng estudyante lang ang lalabas.
-  // Ang sample data ay nasa MOCK_PORTFOLIO pa rin para sa demo public page (/p/demo).
   return [];
 }
 

@@ -106,7 +106,7 @@ export default function VerifyOtp() {
         </button>
       </p>
       <p className="muted">
-        <Link to="/register">Bumalik sa register</Link>
+        <Link to="/">Back to home</Link>
       </p>
     </div>
   );

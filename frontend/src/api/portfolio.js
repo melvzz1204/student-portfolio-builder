@@ -1,5 +1,4 @@
 import api from './client';
-import { MOCK_PORTFOLIO } from '../data/mockPortfolio';
 import { listAchievements } from './achievements';
 import { avatarInitials, getMyProfile } from './profile';
 
@@ -40,10 +39,7 @@ export async function fetchPublicPortfolio(slug) {
       }
     } catch (err) {
       if (err.response?.status === 404) throw err;
-      // Walang naka-login — ipakita ang sample portfolio para sa demo slugs.
-    }
-    if (clean === MOCK_PORTFOLIO.slug || clean === 'demo') {
-      return mockDelay({ ...MOCK_PORTFOLIO });
+      // No demo fallback — unknown slugs are simply not found.
     }
     throw notFound();
   }
